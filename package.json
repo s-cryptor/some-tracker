@@ -1,0 +1,26 @@
+{
+  "name": "some-tracker",
+  "version": "1.0.0",
+  "description": "Telegram habit tracker bot",
+  "main": "dist/index.js",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "lint": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@grammyjs/conversations": "^2.0.0",
+    "better-sqlite3": "^11.0.0",
+    "dotenv": "^16.0.0",
+    "grammy": "^1.30.0",
+    "node-cron": "^3.0.0"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^7.6.0",
+    "@types/node": "^22.0.0",
+    "@types/node-cron": "^3.0.0",
+    "tsx": "^4.0.0",
+    "typescript": "^5.0.0"
+  }
+}
