@@ -9,7 +9,7 @@ import { getTodayDate, getTodayDow, getWeekRange } from "./time.js";
 import { buildCheckinKeyboard } from "./keyboards.js";
 import { formatWeeklyGrid } from "./grid.js";
 
-const TZ = "Asia/Almaty";
+const TZ = "Europe/Moscow";
 
 export function setupScheduler(bot: Bot<Context>, adminChatId: number): void {
   // Morning reminder — 8:00 AM Almaty
@@ -34,9 +34,9 @@ export function setupScheduler(bot: Bot<Context>, adminChatId: number): void {
     { timezone: TZ }
   );
 
-  // Evening check-in — 21:00 Almaty
+  // Evening check-in — 22:00 Moscow
   cron.schedule(
-    "0 21 * * *",
+    "0 22 * * *",
     async () => {
       const date = getTodayDate();
       const dow = getTodayDow();
@@ -58,9 +58,9 @@ export function setupScheduler(bot: Bot<Context>, adminChatId: number): void {
     { timezone: TZ }
   );
 
-  // Weekly stats — Sunday 21:30 Almaty
+  // Weekly stats — Sunday 22:30 Moscow
   cron.schedule(
-    "30 21 * * 0",
+    "30 22 * * 0",
     async () => {
       await sendWeeklyStats(bot, adminChatId);
     },

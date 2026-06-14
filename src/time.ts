@@ -1,4 +1,4 @@
-const TZ = "Asia/Almaty";
+const TZ = "Europe/Moscow";
 
 export function getTodayDate(): string {
   return new Date().toLocaleDateString("sv", { timeZone: TZ }); // YYYY-MM-DD

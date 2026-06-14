@@ -17,7 +17,7 @@ export function formatWeeklyGrid(
   weekEnd: string
 ): string {
   const dates = getDatesInRange(weekStart, weekEnd);
-  const today = new Date().toLocaleDateString("sv", { timeZone: "Asia/Almaty" });
+  const today = new Date().toLocaleDateString("sv", { timeZone: "Europe/Moscow" });
 
   // checkin lookup: activityId -> date -> completed
   const lookup = new Map<number, Map<string, boolean>>();
@@ -81,7 +81,7 @@ export function formatDetailedStats(
   weekEnd: string
 ): string {
   const dates = getDatesInRange(weekStart, weekEnd);
-  const today = new Date().toLocaleDateString("sv", { timeZone: "Asia/Almaty" });
+  const today = new Date().toLocaleDateString("sv", { timeZone: "Europe/Moscow" });
 
   const lookup = new Map<number, Map<string, boolean>>();
   for (const ci of checkins) {
