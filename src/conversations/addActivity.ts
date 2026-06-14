@@ -5,6 +5,10 @@ import { buildDaysKeyboard } from "../keyboards.js";
 
 const DAY_NAMES = ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"];
 
+function esc(text: string): string {
+  return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+
 export async function addActivityConversation(
   conversation: Conversation<Context>,
   ctx: Context
@@ -60,22 +64,13 @@ export async function addActivityConversation(
 
   const dayLabels = days.map((d) => DAY_NAMES[d]).join(", ");
   await ctx.reply(
-    `✅ Активность *${name}* добавлена\\!\nДни: ${escapeMarkdown(dayLabels)}`,
-    { parse_mode: "MarkdownV2" }
+    `✅ Активность <b>${esc(name)}</b> добавлена!\nДни: ${esc(dayLabels)}`,
+    { parse_mode: "HTML" }
   );
 
-  // Edit the days keyboard message to remove buttons
   try {
-    await ctx.api.editMessageReplyMarkup(
-      msg.chat.id,
-      msg.message_id,
-      { reply_markup: undefined }
-    );
+    await ctx.api.editMessageReplyMarkup(msg.chat.id, msg.message_id, { reply_markup: undefined });
   } catch {
-    // ignore if already gone
+    // ignore
   }
-}
-
-function escapeMarkdown(text: string): string {
-  return text.replace(/[_*[\]()~`>#+\-=|{}.!]/g, "\\$&");
 }

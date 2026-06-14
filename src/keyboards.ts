@@ -53,3 +53,35 @@ export function buildActivitiesKeyboard(activities: Activity[], prefix: string):
   keyboard.text("❌ Отмена", `${prefix}:cancel`);
   return keyboard;
 }
+
+// weekStart: YYYY-MM-DD (Monday of that week)
+export function buildWeekNavKeyboard(weekStart: string, mode: "stats" | "details"): InlineKeyboard {
+  const prev = offsetWeek(weekStart, -1);
+  const next = offsetWeek(weekStart, +1);
+  const todayWeek = getCurrentWeekStart();
+  const isCurrentWeek = weekStart === todayWeek;
+
+  const keyboard = new InlineKeyboard();
+  keyboard.text("◀ Пред. неделя", `${mode}:week:${prev}`);
+  if (!isCurrentWeek) {
+    keyboard.text("След. неделя ▶", `${mode}:week:${next}`);
+  }
+  return keyboard;
+}
+
+function offsetWeek(weekStart: string, delta: number): string {
+  const [y, m, d] = weekStart.split("-").map(Number);
+  const date = new Date(y, m - 1, d);
+  date.setDate(date.getDate() + delta * 7);
+  return date.toLocaleDateString("sv");
+}
+
+function getCurrentWeekStart(): string {
+  const today = new Date().toLocaleDateString("sv", { timeZone: "Europe/Moscow" });
+  const [y, m, d] = today.split("-").map(Number);
+  const ref = new Date(y, m - 1, d);
+  const dow = (ref.getDay() + 6) % 7;
+  const monday = new Date(ref);
+  monday.setDate(ref.getDate() - dow);
+  return monday.toLocaleDateString("sv");
+}

@@ -4,19 +4,12 @@ import {
   createConversation,
   type ConversationFlavor,
 } from "@grammyjs/conversations";
-import {
-  getActivities,
-  removeActivity,
-} from "./db.js";
-import {
-  getCheckinsForDateRange,
-  getActivitiesForDay,
-} from "./db.js";
-import { buildCheckinKeyboard, buildRemoveKeyboard } from "./keyboards.js";
+import { getActivities, removeActivity, getCheckinsForDateRange } from "./db.js";
+import { buildCheckinKeyboard, buildRemoveKeyboard, buildWeekNavKeyboard } from "./keyboards.js";
 import { addActivityConversation } from "./conversations/addActivity.js";
 import { handleCheckinCallback, sendCheckinMessage } from "./handlers/checkin.js";
 import { formatWeeklyGrid, formatDetailedStats } from "./grid.js";
-import { getTodayDate, getTodayDow, getWeekRange } from "./time.js";
+import { getWeekRange } from "./time.js";
 
 type MyContext = ConversationFlavor<Context>;
 
@@ -51,17 +44,17 @@ export function createBot(token: string, adminChatId: number): Bot<MyContext> {
   // /help
   bot.command("help", async (ctx) => {
     await ctx.reply(
-      `📖 *Помощь*\n\n` +
-      `*/add* — добавить новую активность\n` +
-      `*/remove* — удалить активность\n` +
-      `*/list* — посмотреть все активности и их дни\n` +
-      `*/checkin* — ручной чек-ин на сегодня\n` +
-      `*/stats* — сетка активности за неделю\n` +
-      `*/details* — подробный список за неделю\n\n` +
-      `Утром в 8:00 прихожу с напоминанием\\.\n` +
-      `Вечером в 21:00 спрошу о прогрессе\\.\n` +
-      `Каждое воскресенье в 21:30 — итоги недели\\.`,
-      { parse_mode: "MarkdownV2" }
+      `📖 <b>Помощь</b>\n\n` +
+      `/add — добавить новую активность\n` +
+      `/remove — удалить активность\n` +
+      `/list — посмотреть все активности и их дни\n` +
+      `/checkin — ручной чек-ин на сегодня\n` +
+      `/stats — сетка активности за неделю\n` +
+      `/details — подробный список за неделю\n\n` +
+      `Утром в 8:00 прихожу с напоминанием.\n` +
+      `Вечером в 22:00 спрошу о прогрессе.\n` +
+      `Каждое воскресенье в 22:30 — итоги недели.`,
+      { parse_mode: "HTML" }
     );
   });
 
@@ -98,8 +91,8 @@ export function createBot(token: string, adminChatId: number): Bot<MyContext> {
       return;
     }
     removeActivity(id);
-    await ctx.editMessageText(`🗑 Активность *${escapeMarkdown(activity.name)}* удалена\\.`, {
-      parse_mode: "MarkdownV2",
+    await ctx.editMessageText(`🗑 Активность <b>${escapeHtml(activity.name)}</b> удалена.`, {
+      parse_mode: "HTML",
     });
     await ctx.answerCallbackQuery("Удалено!");
   });
@@ -116,11 +109,9 @@ export function createBot(token: string, adminChatId: number): Bot<MyContext> {
       const days = a.days.length === 7
         ? "каждый день"
         : a.days.map((d) => dayNames[d]).join(", ");
-      return `• *${escapeMarkdown(a.name)}* — ${escapeMarkdown(days)}`;
+      return `• <b>${escapeHtml(a.name)}</b> — ${days}`;
     });
-    await ctx.reply(`📋 *Активности:*\n\n${lines.join("\n")}`, {
-      parse_mode: "MarkdownV2",
-    });
+    await ctx.reply(`📋 <b>Активности:</b>\n\n${lines.join("\n")}`, { parse_mode: "HTML" });
   });
 
   // /checkin — manual check-in for today
@@ -141,7 +132,7 @@ export function createBot(token: string, adminChatId: number): Bot<MyContext> {
     }
     const checkins = getCheckinsForDateRange(start, end);
     const text = formatWeeklyGrid(activities, checkins, start, end);
-    await ctx.reply(text, { parse_mode: "Markdown" });
+    await ctx.reply(text, { parse_mode: "HTML", reply_markup: buildWeekNavKeyboard(start, "stats") });
   });
 
   // /details — detailed weekly report
@@ -154,7 +145,28 @@ export function createBot(token: string, adminChatId: number): Bot<MyContext> {
     }
     const checkins = getCheckinsForDateRange(start, end);
     const text = formatDetailedStats(activities, checkins, start, end);
-    await ctx.reply(text, { parse_mode: "Markdown" });
+    await ctx.reply(text, { parse_mode: "HTML", reply_markup: buildWeekNavKeyboard(start, "details") });
+  });
+
+  // Week navigation callbacks for stats and details
+  bot.callbackQuery(/^(stats|details):week:/, async (ctx) => {
+    const data = ctx.callbackQuery.data;
+    const [mode, , weekStart] = data.split(":");
+    const { end } = getWeekRange(weekStart);
+    const activities = getActivities();
+    if (activities.length === 0) {
+      await ctx.answerCallbackQuery("Нет активностей.");
+      return;
+    }
+    const checkins = getCheckinsForDateRange(weekStart, end);
+    const text = mode === "stats"
+      ? formatWeeklyGrid(activities, checkins, weekStart, end)
+      : formatDetailedStats(activities, checkins, weekStart, end);
+    await ctx.editMessageText(text, {
+      parse_mode: "HTML",
+      reply_markup: buildWeekNavKeyboard(weekStart, mode as "stats" | "details"),
+    });
+    await ctx.answerCallbackQuery();
   });
 
   // Error handler
@@ -165,6 +177,6 @@ export function createBot(token: string, adminChatId: number): Bot<MyContext> {
   return bot;
 }
 
-function escapeMarkdown(text: string): string {
-  return text.replace(/[_*[\]()~`>#+\-=|{}.!]/g, "\\$&");
+export function escapeHtml(text: string): string {
+  return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }
