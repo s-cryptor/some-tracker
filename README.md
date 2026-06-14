@@ -10,6 +10,7 @@ A personal Telegram bot for tracking daily habits. Sends morning reminders, asks
 - Weekly activity grid every **Sunday at 11:30 PM** (GitHub-style colored squares)
 - Browse past weeks with ◀ / ▶ navigation
 - Detailed day-by-day breakdown via `/details`
+- Wednesday evening prompts for weight and waist measurements (via conversation)
 - All history stored indefinitely in SQLite
 
 ## Commands
@@ -20,6 +21,7 @@ A personal Telegram bot for tracking daily habits. Sends morning reminders, asks
 | `/remove` | Remove a habit |
 | `/list` | List all habits and their schedules |
 | `/checkin` | Manually open today's check-in |
+| `/measure` | Log weight and waist measurements |
 | `/stats` | Weekly activity grid |
 | `/details` | Day-by-day breakdown for the week |
 | `/help` | Show help |

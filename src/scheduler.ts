@@ -1,5 +1,5 @@
 import cron from "node-cron";
-import type { Bot, Context } from "grammy";
+import { InlineKeyboard, type Bot, type Context } from "grammy";
 import { getActivitiesForDay, getActivities, getCheckinsForDateRange } from "./db.js";
 import { getTodayDate, getTodayDow, getWeekRange } from "./time.js";
 import { buildCheckinKeyboard } from "./keyboards.js";
@@ -48,6 +48,16 @@ export function setupScheduler(bot: Bot<Context>, adminChatId: number): void {
         `🌙 <b>Вечерний чек-ин</b>\nКак прошёл день? Отметь выполненные активности:`,
         { parse_mode: "HTML", reply_markup: keyboard }
       );
+
+      // Wednesday (dow=2): prompt for body measurements
+      if (dow === 2) {
+        const measureKeyboard = new InlineKeyboard().text("📏 Записать вес и талию", "measure:start");
+        await bot.api.sendMessage(
+          adminChatId,
+          `📐 <b>Среда — день замеров!</b>\nЗапиши вес и обхват талии, чтобы отследить прогресс.`,
+          { parse_mode: "HTML", reply_markup: measureKeyboard }
+        );
+      }
     },
     { timezone: TZ }
   );

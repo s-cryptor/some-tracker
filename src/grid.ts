@@ -1,4 +1,5 @@
 import type { Activity, CheckIn } from "./types.js";
+import type { Measurement } from "./db.js";
 import { getDatesInRange, getDateDow, formatDateRange } from "./time.js";
 
 function completionSquare(rate: number): string {
@@ -73,7 +74,8 @@ export function formatDetailedStats(
   activities: Activity[],
   checkins: CheckIn[],
   weekStart: string,
-  weekEnd: string
+  weekEnd: string,
+  measurements: Measurement[] = []
 ): string {
   const dates = getDatesInRange(weekStart, weekEnd);
   const today = new Date().toLocaleDateString("sv", { timeZone: "Europe/Moscow" });
@@ -83,6 +85,8 @@ export function formatDetailedStats(
     if (!lookup.has(ci.activity_id)) lookup.set(ci.activity_id, new Map());
     lookup.get(ci.activity_id)!.set(ci.date, ci.completed === 1);
   }
+
+  const measureByDate = new Map(measurements.map((m) => [m.date, m]));
 
   const lines: string[] = [];
   lines.push(`📋 <b>Подробный отчёт ${esc(formatDateRange(weekStart, weekEnd))}</b>`);
@@ -99,6 +103,29 @@ export function formatDetailedStats(
       }
       const completed = lookup.get(activity.id)?.get(date) ?? false;
       lines.push(`  ${formatShortDate(date)} — ${completed ? "✅ выполнено" : "❌ пропущено"}`);
+    }
+    lines.push("");
+  }
+
+  // Wednesday measurements
+  const wednesdayMeasurements = dates.filter((d) => {
+    const [y, m, day] = d.split("-").map(Number);
+    return new Date(y, m - 1, day).getDay() === 3; // Wednesday
+  });
+
+  if (wednesdayMeasurements.length > 0) {
+    lines.push(`<b>📐 Замеры (среда)</b>`);
+    for (const date of wednesdayMeasurements) {
+      const m = measureByDate.get(date);
+      if (m) {
+        const parts: string[] = [];
+        if (m.weight != null) parts.push(`⚖️ ${m.weight} кг`);
+        if (m.waist != null) parts.push(`📏 ${m.waist} см`);
+        lines.push(`  ${formatShortDate(date)} — ${parts.join("  ")}`);
+      } else {
+        const isFuture = date > today;
+        lines.push(`  ${formatShortDate(date)} — ${isFuture ? "⏳ впереди" : "не записано"}`);
+      }
     }
     lines.push("");
   }

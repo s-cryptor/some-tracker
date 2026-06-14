@@ -11,6 +11,13 @@ db.pragma("journal_mode = WAL");
 db.pragma("foreign_keys = ON");
 
 db.exec(`
+  CREATE TABLE IF NOT EXISTS measurements (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    date TEXT NOT NULL UNIQUE,
+    weight REAL,
+    waist REAL
+  );
+
   CREATE TABLE IF NOT EXISTS activities (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     name TEXT NOT NULL,
@@ -95,4 +102,27 @@ export function getCheckinsForDateRange(startDate: string, endDate: string): Che
   return db
     .prepare("SELECT * FROM checkins WHERE date >= ? AND date <= ?")
     .all(startDate, endDate) as CheckIn[];
+}
+
+export interface Measurement {
+  id: number;
+  date: string;
+  weight: number | null;
+  waist: number | null;
+}
+
+export function getMeasurement(date: string): Measurement | null {
+  return (db.prepare("SELECT * FROM measurements WHERE date = ?").get(date) as Measurement | undefined) ?? null;
+}
+
+export function saveMeasurement(date: string, weight: number | null, waist: number | null): void {
+  db.prepare(
+    "INSERT INTO measurements (date, weight, waist) VALUES (?, ?, ?) ON CONFLICT(date) DO UPDATE SET weight = excluded.weight, waist = excluded.waist"
+  ).run(date, weight, waist);
+}
+
+export function getMeasurementsForDateRange(startDate: string, endDate: string): Measurement[] {
+  return db
+    .prepare("SELECT * FROM measurements WHERE date >= ? AND date <= ? ORDER BY date ASC")
+    .all(startDate, endDate) as Measurement[];
 }
