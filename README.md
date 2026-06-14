@@ -90,9 +90,14 @@ Adds: Reading (daily), Calorie control (daily), Cardio (Mon/Wed/Fri), Learning (
 
 ## Deployment (VPS)
 
+Set `DEPLOY_HOST` (and optionally `DEPLOY_DIR`) before running the script:
+
 ```bash
+export DEPLOY_HOST=root@1.2.3.4
+export DEPLOY_DIR=/opt/habit-tracker  # default
+
 ./deploy.sh
-ssh root@your-vps "cd /opt/habit-tracker && pm2 restart habit-tracker"
+ssh $DEPLOY_HOST "cd $DEPLOY_DIR && pm2 restart habit-tracker"
 ```
 
 PM2 is configured to auto-start on reboot via `ecosystem.config.js`.

@@ -1,10 +1,10 @@
 #!/bin/bash
 set -e
 
-VPS="root@91.218.141.109"
-REMOTE_DIR="/opt/habit-tracker"
+VPS="${DEPLOY_HOST:?Set DEPLOY_HOST, e.g. root@1.2.3.4}"
+REMOTE_DIR="${DEPLOY_DIR:-/opt/habit-tracker}"
 
-echo "==> Syncing files to VPS..."
+echo "==> Syncing files to $VPS:$REMOTE_DIR..."
 rsync -az --delete \
   --exclude='node_modules' \
   --exclude='dist' \
