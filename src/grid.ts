@@ -1,5 +1,5 @@
 import type { Activity, CheckIn } from "./types.js";
-import type { Measurement } from "./db.js";
+import type { Measurement, Nutrition } from "./db.js";
 import { getDatesInRange, getDateDow, formatDateRange } from "./time.js";
 
 function completionSquare(rate: number): string {
@@ -75,7 +75,8 @@ export function formatDetailedStats(
   checkins: CheckIn[],
   weekStart: string,
   weekEnd: string,
-  measurements: Measurement[] = []
+  measurements: Measurement[] = [],
+  nutrition: Nutrition[] = []
 ): string {
   const dates = getDatesInRange(weekStart, weekEnd);
   const today = new Date().toLocaleDateString("sv", { timeZone: "Europe/Moscow" });
@@ -87,6 +88,7 @@ export function formatDetailedStats(
   }
 
   const measureByDate = new Map(measurements.map((m) => [m.date, m]));
+  const nutritionByDate = new Map(nutrition.map((n) => [n.date, n]));
 
   const lines: string[] = [];
   lines.push(`📋 <b>Подробный отчёт ${esc(formatDateRange(weekStart, weekEnd))}</b>`);
@@ -106,6 +108,21 @@ export function formatDetailedStats(
     }
     lines.push("");
   }
+
+  // Daily nutrition
+  lines.push(`<b>🍽 КБЖУ</b>`);
+  for (const date of dates) {
+    if (date > today) continue;
+    const n = nutritionByDate.get(date);
+    if (n) {
+      lines.push(
+        `  ${formatShortDate(date)} — 🔥${n.calories} ккал  🥩${n.protein}г  🧈${n.fat}г  🍞${n.carbs}г`
+      );
+    } else {
+      lines.push(`  ${formatShortDate(date)} — не записано`);
+    }
+  }
+  lines.push("");
 
   // Wednesday measurements
   const wednesdayMeasurements = dates.filter((d) => {

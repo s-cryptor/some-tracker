@@ -49,6 +49,14 @@ export function setupScheduler(bot: Bot<Context>, adminChatId: number): void {
         { parse_mode: "HTML", reply_markup: keyboard }
       );
 
+      // Daily nutrition prompt
+      const nutritionKeyboard = new InlineKeyboard().text("🍽 Записать КБЖУ", "nutrition:start");
+      await bot.api.sendMessage(
+        adminChatId,
+        `🍽 Не забудь записать КБЖУ за сегодня!`,
+        { reply_markup: nutritionKeyboard }
+      );
+
       // Wednesday (dow=2): prompt for body measurements
       if (dow === 2) {
         const measureKeyboard = new InlineKeyboard().text("📏 Записать вес и талию", "measure:start");

@@ -11,6 +11,15 @@ db.pragma("journal_mode = WAL");
 db.pragma("foreign_keys = ON");
 
 db.exec(`
+  CREATE TABLE IF NOT EXISTS nutrition (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    date TEXT NOT NULL UNIQUE,
+    calories INTEGER,
+    protein REAL,
+    fat REAL,
+    carbs REAL
+  );
+
   CREATE TABLE IF NOT EXISTS measurements (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     date TEXT NOT NULL UNIQUE,
@@ -125,4 +134,29 @@ export function getMeasurementsForDateRange(startDate: string, endDate: string):
   return db
     .prepare("SELECT * FROM measurements WHERE date >= ? AND date <= ? ORDER BY date ASC")
     .all(startDate, endDate) as Measurement[];
+}
+
+export interface Nutrition {
+  id: number;
+  date: string;
+  calories: number | null;
+  protein: number | null;
+  fat: number | null;
+  carbs: number | null;
+}
+
+export function getNutrition(date: string): Nutrition | null {
+  return (db.prepare("SELECT * FROM nutrition WHERE date = ?").get(date) as Nutrition | undefined) ?? null;
+}
+
+export function saveNutrition(date: string, calories: number, protein: number, fat: number, carbs: number): void {
+  db.prepare(
+    "INSERT INTO nutrition (date, calories, protein, fat, carbs) VALUES (?, ?, ?, ?, ?) ON CONFLICT(date) DO UPDATE SET calories = excluded.calories, protein = excluded.protein, fat = excluded.fat, carbs = excluded.carbs"
+  ).run(date, calories, protein, fat, carbs);
+}
+
+export function getNutritionForDateRange(startDate: string, endDate: string): Nutrition[] {
+  return db
+    .prepare("SELECT * FROM nutrition WHERE date >= ? AND date <= ? ORDER BY date ASC")
+    .all(startDate, endDate) as Nutrition[];
 }

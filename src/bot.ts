@@ -4,10 +4,11 @@ import {
   createConversation,
   type ConversationFlavor,
 } from "@grammyjs/conversations";
-import { getActivities, removeActivity, getCheckinsForDateRange, getMeasurementsForDateRange } from "./db.js";
+import { getActivities, removeActivity, getCheckinsForDateRange, getMeasurementsForDateRange, getNutritionForDateRange } from "./db.js";
 import { buildCheckinKeyboard, buildRemoveKeyboard, buildWeekNavKeyboard } from "./keyboards.js";
 import { addActivityConversation } from "./conversations/addActivity.js";
 import { measurementConversation } from "./conversations/measurement.js";
+import { nutritionConversation } from "./conversations/nutrition.js";
 import { handleCheckinCallback, sendCheckinMessage } from "./handlers/checkin.js";
 import { formatWeeklyGrid, formatDetailedStats } from "./grid.js";
 import { getWeekRange } from "./time.js";
@@ -27,6 +28,7 @@ export function createBot(token: string, adminChatId: number): Bot<MyContext> {
   bot.use(conversations<MyContext, MyContext>());
   bot.use(createConversation(addActivityConversation, "addActivity"));
   bot.use(createConversation(measurementConversation, "measurement"));
+  bot.use(createConversation(nutritionConversation, "nutrition"));
 
   // /start
   bot.command("start", async (ctx) => {
@@ -37,6 +39,7 @@ export function createBot(token: string, adminChatId: number): Bot<MyContext> {
       `/remove — удалить активность\n` +
       `/list — список активностей\n` +
       `/checkin — отметить активности вручную\n` +
+      `/kbju — записать КБЖУ за день\n` +
       `/measure — записать вес и талию\n` +
       `/stats — статистика за неделю\n` +
       `/details — подробный отчёт\n` +
@@ -52,6 +55,7 @@ export function createBot(token: string, adminChatId: number): Bot<MyContext> {
       `/remove — удалить активность\n` +
       `/list — посмотреть все активности и их дни\n` +
       `/checkin — ручной чек-ин на сегодня\n` +
+      `/kbju — записать КБЖУ за день\n` +
       `/measure — записать вес и обхват талии\n` +
       `/stats — сетка активности за неделю\n` +
       `/details — подробный список за неделю\n\n` +
@@ -71,6 +75,17 @@ export function createBot(token: string, adminChatId: number): Bot<MyContext> {
   bot.callbackQuery("measure:start", async (ctx) => {
     await ctx.answerCallbackQuery();
     await ctx.conversation.enter("measurement");
+  });
+
+  // /kbju — manual nutrition entry
+  bot.command("kbju", async (ctx) => {
+    await ctx.conversation.enter("nutrition");
+  });
+
+  // Nutrition prompt button (sent every evening)
+  bot.callbackQuery("nutrition:start", async (ctx) => {
+    await ctx.answerCallbackQuery();
+    await ctx.conversation.enter("nutrition");
   });
 
   // /add
@@ -160,7 +175,8 @@ export function createBot(token: string, adminChatId: number): Bot<MyContext> {
     }
     const checkins = getCheckinsForDateRange(start, end);
     const measurements = getMeasurementsForDateRange(start, end);
-    const text = formatDetailedStats(activities, checkins, start, end, measurements);
+    const nutrition = getNutritionForDateRange(start, end);
+    const text = formatDetailedStats(activities, checkins, start, end, measurements, nutrition);
     await ctx.reply(text, { parse_mode: "HTML", reply_markup: buildWeekNavKeyboard(start, "details") });
   });
 
@@ -176,9 +192,10 @@ export function createBot(token: string, adminChatId: number): Bot<MyContext> {
     }
     const checkins = getCheckinsForDateRange(weekStart, end);
     const measurements = getMeasurementsForDateRange(weekStart, end);
+    const nutrition = getNutritionForDateRange(weekStart, end);
     const text = mode === "stats"
       ? formatWeeklyGrid(activities, checkins, weekStart, end)
-      : formatDetailedStats(activities, checkins, weekStart, end, measurements);
+      : formatDetailedStats(activities, checkins, weekStart, end, measurements, nutrition);
     await ctx.editMessageText(text, {
       parse_mode: "HTML",
       reply_markup: buildWeekNavKeyboard(weekStart, mode as "stats" | "details"),
