@@ -30,9 +30,9 @@ export function setupScheduler(bot: Bot<Context>, adminChatId: number): void {
     { timezone: TZ }
   );
 
-  // Evening check-in — 22:00 Moscow
+  // Evening check-in — 23:00 Moscow
   cron.schedule(
-    "0 22 * * *",
+    "0 23 * * *",
     async () => {
       const date = getTodayDate();
       const dow = getTodayDow();
@@ -52,9 +52,9 @@ export function setupScheduler(bot: Bot<Context>, adminChatId: number): void {
     { timezone: TZ }
   );
 
-  // Weekly stats — Sunday 22:30 Moscow
+  // Weekly stats — Sunday 23:30 Moscow
   cron.schedule(
-    "30 22 * * 0",
+    "30 23 * * 0",
     async () => {
       await sendWeeklyStats(bot, adminChatId);
     },
